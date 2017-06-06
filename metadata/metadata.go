@@ -18,6 +18,7 @@ type Client interface {
 	GetSelfServiceByName(string) (Service, error)
 	GetSelfService() (Service, error)
 	GetSelfStack() (Stack, error)
+	GetSelfServices() ([]Service, error)
 	GetServices() ([]Service, error)
 	GetStacks() ([]Stack, error)
 	GetContainers() ([]Container, error)
@@ -64,7 +65,7 @@ func NewClientAndWait(url string) (Client, error) {
 }
 
 func (m *client) SendRequest(path string) ([]byte, error) {
-	req, err := http.NewRequest("GET", m.url+path, nil)
+	req, err := http.NewRequest("GET", m.url + path, nil)
 	req.Header.Add("Accept", "application/json")
 	if m.ip != "" {
 		req.Header.Add("X-Forwarded-For", m.ip)
@@ -164,6 +165,20 @@ func (m *client) GetSelfStack() (Stack, error) {
 	return stack, nil
 }
 
+func (m *client)  GetSelfServices() ([]Service, error) {
+	resp, err := m.SendRequest("/self/stack/services")
+	var services []Service
+	if err != nil {
+		return services, err
+	}
+
+	if err = json.Unmarshal(resp, &services); err != nil {
+		return services, err
+	}
+
+	return services, nil
+}
+
 func (m *client) GetServices() ([]Service, error) {
 	resp, err := m.SendRequest("/services")
 	var services []Service
@@ -189,6 +204,7 @@ func (m *client) GetStacks() ([]Stack, error) {
 	}
 	return stacks, nil
 }
+
 
 func (m *client) GetContainers() ([]Container, error) {
 	resp, err := m.SendRequest("/containers")
